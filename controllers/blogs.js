@@ -1,12 +1,12 @@
 const Blog = require('../models/blog')
 const blogRouter = require('express').Router()
+const middleware = require('../utils/middleware')
 
-blogRouter.get('/', (request, response) => {
-  Blog
-    .find({})
-    .then(blogs => {
-      response.json(blogs)
-    })
+blogRouter.get('/', async (request, response) => {
+  const blogs = await Blog
+    .find({}).populate('user', { username: 1, name: 1 })
+
+  response.json(blogs)
 })
 
 blogRouter.get('/:id', async (request, response) => {
@@ -16,17 +16,26 @@ blogRouter.get('/:id', async (request, response) => {
   response.json(foundBlog)
 })
 
-blogRouter.post('/', (request, response) => {
-  const blog = new Blog(request.body)
+blogRouter.post('/', middleware.tokenExtractor, middleware.userExtractor, async (request, response, next) => {
+  const body = request.body
+  const user = request.user
 
-  blog
-    .save()
-    .then(result => {
-      response.status(201).json(result)
-    })
-    .catch(error => {
-      response.status(400).json(error)
-    })
+  const newBlog = new Blog({
+    author: body.author,
+    title: body.title,
+    url: body.url,
+    upvotes: body.upvotes,
+    user: user._id
+  })
+
+  try {
+    const savedBlog = await newBlog.save()
+    user.blogs = user.blogs.concat(savedBlog._id)
+    await user.save()
+    response.status(201).json(savedBlog)
+  } catch (error) {
+    next(error)
+  }
 })
 
 blogRouter.put('/:id', async (request, response) => {
@@ -42,16 +51,22 @@ blogRouter.put('/:id', async (request, response) => {
   response.json(updatedBlog)
 })
 
-blogRouter.delete('/:id', async (request, response) => {
+blogRouter.delete('/:id', middleware.tokenExtractor, middleware.userExtractor, async (request, response, next) => {
   const id = request.params.id
+  const user = request.user
 
-  try {
-    await Blog.findByIdAndRemove(id)
-  } catch (e) {
-    console.log(e)
+  const blogToDelete = await Blog.findById(id)
+
+  if (blogToDelete.user.toString() === user._id.toString()) {
+    try {
+      await Blog.findByIdAndRemove(blogToDelete.id)
+      response.status(204).end()
+    } catch (e) {
+      next(e)
+    }
+  } else {
+    return response.status(403).json({ error: 'access is forbidden' })
   }
-
-  response.status(204).end()
 })
 
 module.exports = blogRouter

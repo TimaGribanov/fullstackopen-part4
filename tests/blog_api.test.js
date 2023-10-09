@@ -35,8 +35,15 @@ describe('addition of a new blog', () => {
       "upvotes": 6
     }
 
+    const tokenResponse = await api
+      .post('/api/login')
+      .send({ "username": "tester2", "password": "testingPaSS" })
+
+    const token = 'Bearer ' + tokenResponse.body.token
+
     await api
       .post('/api/blogs')
+      .set('Authorization', token)
       .send(body)
       .expect(201)
       .expect('Content-Type', /application\/json/)
@@ -52,8 +59,16 @@ describe('addition of a new blog', () => {
       title: 'Auto Test Zeroes',
       url: '/auto_test_zeroes.html'
     }
+
+    const tokenResponse = await api
+      .post('/api/login')
+      .send({ "username": "tester2", "password": "testingPaSS" })
+
+    const token = 'Bearer ' + tokenResponse.body.token
+
     await api
       .post('/api/blogs')
+      .set('Authorization', token)
       .send(body)
       .expect(201)
       .expect('Content-Type', /application\/json/)
@@ -72,8 +87,15 @@ describe('addition of a new blog', () => {
       upvotes: 8
     }
 
+    const tokenResponse = await api
+      .post('/api/login')
+      .send({ "username": "tester2", "password": "testingPaSS" })
+
+    const token = 'Bearer ' + tokenResponse.body.token
+
     await api
       .post('/api/blogs')
+      .set('Authorization', token)
       .send(body)
       .expect(400)
   })
@@ -85,8 +107,15 @@ describe('addition of a new blog', () => {
       upvotes: 3
     }
 
+    const tokenResponse = await api
+      .post('/api/login')
+      .send({ "username": "tester2", "password": "testingPaSS" })
+
+    const token = 'Bearer ' + tokenResponse.body.token
+
     await api
       .post('/api/blogs')
+      .set('Authorization', token)
       .send(body)
       .expect(400)
   })
@@ -97,8 +126,15 @@ describe('deletion of a node', () => {
     const blogsBefore = await helper.blogsInDb()
     const blogToDelete = blogsBefore[0]
 
+    const tokenResponse = await api
+      .post('/api/login')
+      .send({ "username": "tester2", "password": "testingPaSS" })
+
+    const token = 'Bearer ' + tokenResponse.body.token
+
     await api
       .delete(`/api/blogs/${blogToDelete.id}`)
+      .set('Authorization', token)
       .expect(204)
 
     const blogsAfter = await helper.blogsInDb()
