@@ -27,6 +27,21 @@ describe('when there are initialy some blogs saved', () => {
 })
 
 describe('addition of a new blog', () => {
+  test('a blog cannot be created if token is absent', async () => {
+    const body = {
+      "name": "AutoTest",
+      "title": "Auto Test",
+      "url": "/auto_test.html",
+      "upvotes": 6
+    }
+
+    await api
+      .post('/api/blogs')
+      .send(body)
+      .expect(401)
+      .expect('Content-Type', /application\/json/)
+  })
+
   test('a blog can be created', async () => {
     const body = {
       "name": "AutoTest",
